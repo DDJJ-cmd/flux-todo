@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)file:///C:/Users/jsmgo/Downloads/flux-supabase_3.html -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUX — Task Intelligence</title>
+<link href="./FLUX — Task Intelligence_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e8f0;
+    --text2: #888899;
+    --text3: #555566;
+    --accent: #7c6cf0;
+    --accent2: #5eead4;
+    --urgent: #f87171;
+    --short: #fb923c;
+    --mid: #facc15;
+    --long: #4ade80;
+    --done: #555566;
+    --w: 100%;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    width: 100%;
+    max-width: 320px;
+    height: 100dvh;
+    
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+    body { width: 100vw; }
+  }
+
+  /* HEADER */
+  .header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, #7c6cf0, #5eead4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .time-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* TAB NAV */
+  .tabs {
+    display: flex;
+    gap: 2px;
+  }
+  .tab {
+    flex: 1;
+    padding: 6px 4px;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab:hover:not(.active) { color: var(--text2); }
+
+  /* PANELS */
+  .panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  /* ===== TODO PANEL ===== */
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .mode-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 36px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-track {
+    width: 100%;
+    max-width: 320px;
+    height: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    background: var(--text3);
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: all 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-track::after {
+    left: 20px;
+    background: white;
+  }
+  .mode-label.right { margin-left: auto; }
+
+  /* INPUT AREA */
+  .input-area {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .input-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .task-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .task-input:focus { border-color: var(--accent); }
+  .task-input::placeholder { color: var(--text3); }
+  .add-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    padding: 7px 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .add-btn:hover { opacity: 0.85; }
+
+  .meta-row {
+    display: flex;
+    gap: 5px;
+  }
+  .meta-select {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 10px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .meta-select:focus { border-color: var(--accent); }
+
+  /* NOTE MODE */
+  .note-area {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    resize: none;
+    outline: none;
+    display: none;
+  }
+  .note-area::placeholder { color: var(--text3); }
+
+  /* TASK LIST */
+  .task-list-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+  }
+  .task-list-wrapper::-webkit-scrollbar { width: 3px; }
+  .task-list-wrapper::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 4px 3px;
+  }
+
+  /* TASK ITEM */
+  .task-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 3px;
+    border-radius: 7px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s;
+    overflow: hidden;
+  }
+  .task-item:hover {
+    border-color: var(--border2);
+    transform: translateX(-2px);
+    z-index: 10;
+  }
+  .task-item:hover .task-text-wrap { max-height: 200px; }
+
+  /* Priority indicator */
+  .priority-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 7px 0 0 7px;
+  }
+  .p-urgent { background: var(--urgent); }
+  .p-short { background: var(--short); }
+  .p-mid { background: var(--mid); }
+  .p-long { background: var(--long); }
+
+  .task-check {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border2);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .task-check:hover { border-color: var(--accent2); }
+  .task-check.checked {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+  .task-check.checked::after {
+    content: '✓';
+    font-size: 10px;
+    color: #0a0a0f;
+    font-weight: 700;
+  }
+
+  .task-body { flex: 1; min-width: 0; }
+
+  .task-text-wrap {
+    max-height: 22px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .task-text {
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+  }
+  .task-item:hover .task-text { white-space: normal; }
+
+  /* marquee for long text */
+  .task-text.long {
+    animation: marquee 8s linear infinite;
+    display: inline-block;
+  }
+  .task-item:hover .task-text.long { animation: none; white-space: normal; }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(0); }
+    70% { transform: translateX(-60%); }
+    100% { transform: translateX(-60%); }
+  }
+
+  .task-text.strikethrough {
+    text-decoration: line-through;
+    color: var(--done);
+    animation: strikeAnim 0.3s ease forwards;
+  }
+  @keyframes strikeAnim {
+    from { text-decoration: none; }
+    to { text-decoration: line-through; }
+  }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+  }
+  .priority-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .pb-urgent { background: rgba(248,113,113,0.15); color: var(--urgent); }
+  .pb-short { background: rgba(251,146,60,0.15); color: var(--short); }
+  .pb-mid { background: rgba(250,204,21,0.15); color: var(--mid); }
+  .pb-long { background: rgba(74,222,128,0.15); color: var(--long); }
+
+  .cat-badge {
+    font-size: 9px;
+    color: var(--text3);
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  .task-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .delete-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .task-item:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--urgent); }
+
+  /* dismiss animation */
+  .task-item.dismissing {
+    animation: dismiss 0.4s ease forwards;
+  }
+  @keyframes dismiss {
+    0% { opacity:1; transform: translateX(0); max-height: 60px; }
+    60% { opacity:0; transform: translateX(20px); max-height: 60px; }
+    100% { opacity:0; max-height: 0; padding: 0; margin: 0; border: none; }
+  }
+
+  /* ===== CALENDAR PANEL ===== */
+  .cal-header {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .cal-nav button {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .cal-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-month {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+  }
+  .cal-weekday {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    padding: 3px 0;
+  }
+
+  .cal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+  }
+  .cal-body::-webkit-scrollbar { width: 3px; }
+  .cal-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    background: var(--bg3);
+  }
+  .cal-day:hover { background: var(--bg2); border: 1px solid var(--border2); }
+  .cal-day.today {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+  }
+  .cal-day.has-tasks::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 4px; height: 4px;
+    background: var(--accent2);
+    border-radius: 50%;
+  }
+  .cal-day.today.has-tasks::after { background: white; }
+  .cal-day.other-month { opacity: 0.25; }
+  .cal-day.has-done::before {
+    content: '';
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 4px; height: 4px;
+    background: var(--long);
+    border-radius: 50%;
+  }
+
+  /* Review button */
+  .review-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(124,108,240,0.15), rgba(94,234,212,0.1));
+    border: 1px solid rgba(124,108,240,0.3);
+    border-radius: 8px;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .review-btn:hover {
+    background: linear-gradient(135deg, rgba(124,108,240,0.25), rgba(94,234,212,0.15));
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .review-btn .spark { font-size: 14px; }
+
+  /* ===== LOG PANEL ===== */
+  .log-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 10px;
+  }
+  .log-body::-webkit-scrollbar { width: 3px; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .log-item {
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 4px;
+    border-left: 3px solid var(--done);
+  }
+  .log-item.l-urgent { border-left-color: var(--urgent); }
+  .log-item.l-short { border-left-color: var(--short); }
+  .log-item.l-mid { border-left-color: var(--mid); }
+  .log-item.l-long { border-left-color: var(--long); }
+
+  .log-text {
+    font-size: 12px;
+    color: var(--text2);
+    text-decoration: line-through;
+    margin-bottom: 4px;
+  }
+  .log-times {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .log-time-row {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    display: flex;
+    gap: 5px;
+  }
+  .log-time-row span { color: var(--text2); }
+
+  /* Share btn */
+  .share-bar {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+  }
+  .share-btn {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 7px;
+    border-radius: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .share-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* MODAL - AI Review */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    width: 290px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    background: linear-gradient(135deg, #7c6cf0, #5eead4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-content {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+  .modal-content .ai-badge {
+    display: inline-block;
+    background: rgba(124,108,240,0.15);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    letter-spacing: 0.06em;
+  }
+  .typing-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: typing 1s infinite;
+    margin: 0 2px;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing {
+    0%,80%,100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* EDIT MODAL */
+  .edit-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .edit-overlay.open { display: flex; }
+  .edit-modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 320px;
+    max-width: 290px;
+    padding: 16px;
+  }
+  .edit-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .edit-modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .edit-created {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+  .edit-textarea {
+    width: 100%;
+    max-width: 320px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 72px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  .edit-textarea:focus { border-color: var(--accent); }
+  .edit-meta-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .edit-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .edit-save {
+    flex: 1;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    padding: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .edit-save:hover { opacity: 0.85; }
+  .edit-cancel {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    padding: 8px 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .edit-cancel:hover { border-color: var(--text2); }
+
+  /* edit icon on task */
+  .edit-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .task-item:hover .edit-btn { opacity: 1; }
+  .edit-btn:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">FLUX</div>
+    <div class="time-display" id="clock">16:24:32</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="todo">TODO</button>
+    <button class="tab" data-tab="calendar">CALENDAR</button>
+    <button class="tab" data-tab="log">LOG</button>
+  </div>
+</div>
+
+<!-- ===== TODO PANEL ===== -->
+<div class="panel active" id="panel-todo">
+  <!-- Mode toggle -->
+  <div class="mode-toggle">
+    <span class="mode-label">NOTE</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="modeToggle" checked="">
+      <div class="toggle-track"></div>
+    </label>
+    <span class="mode-label right">TODO</span>
+  </div>
+
+  <!-- Note mode -->
+  <textarea class="note-area" id="noteArea" placeholder="メモを入力... (日本語・英語OK)"></textarea>
+
+  <!-- Todo mode -->
+  <div id="todoMode">
+    <div class="input-area">
+      <div class="input-row">
+        <input type="text" class="task-input" id="taskInput" placeholder="TODOを入力してEnter...">
+        <button class="add-btn" id="addBtn">ADD</button>
+      </div>
+      <div class="meta-row">
+        <select class="meta-select" id="prioritySelect">
+          <option value="urgent">⚡ Urgent</option>
+          <option value="short">🔶 Short</option>
+          <option value="mid" selected="">🔷 Mid</option>
+          <option value="long">🟢 Long</option>
+        </select>
+        <select class="meta-select" id="categorySelect">
+          <option value="HMJ">HMJ</option>
+          <option value="MO">MO</option>
+          <option value="SaaS">SaaS</option>
+          <option value="Personal">Personal</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="task-list-wrapper" id="taskList"><div class="section-label">ACTIVE</div><div class="task-item" data-id="bc38dc4e-6c9b-4bb7-abc4-14bce39a0556">
+    <div class="priority-bar p-urgent"></div>
+    <div class="task-check " data-check="bc38dc4e-6c9b-4bb7-abc4-14bce39a0556"></div>
+    <div class="task-body">
+      <div class="task-text-wrap">
+        <span class="task-text  ">PL作成</span>
+      </div>
+      <div class="task-meta">
+        <span class="priority-badge pb-urgent">URGENT</span>
+        <span class="cat-badge">HMJ</span>
+        <span class="task-time">4/25 16:06</span>
+      </div>
+    </div>
+    <button class="edit-btn" data-edit="bc38dc4e-6c9b-4bb7-abc4-14bce39a0556">✎</button>
+    <button class="delete-btn" data-del="bc38dc4e-6c9b-4bb7-abc4-14bce39a0556">×</button>
+  </div></div>
+  </div>
+</div>
+
+<!-- ===== CALENDAR PANEL ===== -->
+<div class="panel" id="panel-calendar">
+  <div class="cal-header">
+    <div class="cal-nav">
+      <button id="calPrev">‹</button>
+      <div class="cal-month" id="calMonthLabel"></div>
+      <button id="calNext">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <div class="cal-weekday">S</div><div class="cal-weekday">M</div>
+      <div class="cal-weekday">T</div><div class="cal-weekday">W</div>
+      <div class="cal-weekday">T</div><div class="cal-weekday">F</div>
+      <div class="cal-weekday">S</div>
+    </div>
+  </div>
+  <div class="cal-body">
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="review-btn" id="reviewBtn">
+      <span class="spark">✦</span> INSIGHT — AI月次レビュー
+    </button>
+    <div id="calDayDetail"></div>
+  </div>
+</div>
+
+<!-- ===== LOG PANEL ===== -->
+<div class="panel" id="panel-log">
+  <div class="task-list-wrapper log-body" id="logList">
+    <div class="section-label">COMPLETED LOG</div>
+  </div>
+  <div class="share-bar">
+    <button class="share-btn" id="shareBtn">⬆ SHARE</button>
+    <button class="share-btn" id="exportBtn">↓ EXPORT</button>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <div class="edit-modal-title">✎ EDIT TODO</div>
+      <button class="modal-close" id="editClose">✕</button>
+    </div>
+    <div class="edit-created" id="editCreatedLabel"></div>
+    <textarea class="edit-textarea" id="editTextarea"></textarea>
+    <div class="edit-meta-row">
+      <select class="meta-select" id="editPriority">
+        <option value="urgent">⚡ Urgent</option>
+        <option value="short">🔶 Short</option>
+        <option value="mid">🔷 Mid</option>
+        <option value="long">🟢 Long</option>
+      </select>
+      <select class="meta-select" id="editCategory">
+        <option value="HMJ">HMJ</option>
+        <option value="MO">MO</option>
+        <option value="SaaS">SaaS</option>
+        <option value="Personal">Personal</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="edit-actions">
+      <button class="edit-cancel" id="editCancel">CANCEL</button>
+      <button class="edit-save" id="editSave">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Review Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✦ INSIGHT</div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-content" id="modalContent">
+      <div class="ai-badge">CLAUDE AI · MONTHLY REVIEW</div>
+      <div id="modalText"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======== SUPABASE CONFIG ========
+const SUPABASE_URL = 'https://hrempljaeljfgwwfxbge.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZW1wbGphZWxqZmd3d2Z4YmdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTU0MzMsImV4cCI6MjA5MjY3MTQzM30.64LLfnaXi6OQ_VsElE2rSUQO9f_pTrFanhfSK3UchrQ';
+const USER_ID = 'default';
+
+const api = {
+  async get(table, filter = '') {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}&order=created_at.asc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async insert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async update(table, id, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async delete(table, id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+  }
+};
+
+// ======== STATE ========
+let tasks = [];
+let log = [];
+let calYear, calMonth;
+
+const now = new Date();
+calYear = now.getFullYear();
+calMonth = now.getMonth();
+
+// ======== CLOCK ========
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ======== TABS ========
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'calendar') renderCalendar();
+    if (tab.dataset.tab === 'log') renderLog();
+  });
+});
+
+// ======== MODE TOGGLE ========
+const modeToggle = document.getElementById('modeToggle');
+const noteArea = document.getElementById('noteArea');
+const todoMode = document.getElementById('todoMode');
+
+modeToggle.addEventListener('change', () => {
+  if (modeToggle.checked) {
+    noteArea.style.display = 'none';
+    todoMode.style.display = 'flex';
+    todoMode.style.flexDirection = 'column';
+    todoMode.style.flex = '1';
+    todoMode.style.overflow = 'hidden';
+  } else {
+    noteArea.style.display = 'block';
+    noteArea.style.flex = '1';
+    todoMode.style.display = 'none';
+  }
+});
+
+// ======== ADD TASK ========
+async function addTask(text) {
+  if (!text.trim()) return;
+  document.getElementById('taskInput').value = '';
+  const result = await api.insert('todos', {
+    text: text.trim(),
+    priority: document.getElementById('prioritySelect').value,
+    category: document.getElementById('categorySelect').value,
+    user_id: USER_ID,
+    is_done: false
+  });
+  if (result && result[0]) {
+    tasks.push(normalizeTask(result[0]));
+    renderTasks();
+  }
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  addTask(document.getElementById('taskInput').value);
+});
+document.getElementById('taskInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask(e.target.value);
+});
+
+// ======== RENDER TASKS ========
+function renderTasks() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = '<div class="section-label">ACTIVE</div>';
+
+  const active = tasks.filter(t => !t.done);
+  active.forEach(task => {
+    const el = createTaskEl(task);
+    list.appendChild(el);
+  });
+}
+
+function createTaskEl(task) {
+  const div = document.createElement('div');
+  div.className = 'task-item';
+  div.dataset.id = task.id;
+
+  const isLong = task.text.length > 28;
+
+  div.innerHTML = `
+    <div class="priority-bar p-${task.priority}"></div>
+    <div class="task-check ${task.done ? 'checked' : ''}" data-check="${task.id}"></div>
+    <div class="task-body">
+      <div class="task-text-wrap">
+        <span class="task-text ${isLong ? 'long' : ''} ${task.done ? 'strikethrough' : ''}">${task.text}</span>
+      </div>
+      <div class="task-meta">
+        <span class="priority-badge pb-${task.priority}">${task.priority.toUpperCase()}</span>
+        <span class="cat-badge">${task.category}</span>
+        <span class="task-time">${formatTime(task.createdAt)}</span>
+      </div>
+    </div>
+    <button class="edit-btn" data-edit="${task.id}">✎</button>
+    <button class="delete-btn" data-del="${task.id}">×</button>
+  `;
+
+  // Edit
+  div.querySelector('[data-edit]').addEventListener('click', e => {
+    e.stopPropagation();
+    openEditModal(task.id);
+  });
+
+  // Check
+  div.querySelector('[data-check]').addEventListener('click', e => {
+    e.stopPropagation();
+    completeTask(task.id, div);
+  });
+
+  // Delete
+  div.querySelector('[data-del]').addEventListener('click', e => {
+    e.stopPropagation();
+    deleteTask(task.id, div);
+  });
+
+  return div;
+}
+
+// ======== EDIT MODAL ========
+let editingId = null;
+
+function openEditModal(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  editingId = id;
+
+  document.getElementById('editTextarea').value = task.text;
+  document.getElementById('editPriority').value = task.priority;
+  document.getElementById('editCategory').value = task.category;
+  document.getElementById('editCreatedLabel').textContent =
+    '📝 作成日時: ' + formatTime(task.createdAt) + '  (変更不可)';
+
+  document.getElementById('editOverlay').classList.add('open');
+  document.getElementById('editTextarea').focus();
+}
+
+document.getElementById('editSave').addEventListener('click', async () => {
+  const task = tasks.find(t => t.id === editingId);
+  if (!task) return;
+  const newText = document.getElementById('editTextarea').value.trim();
+  if (!newText) return;
+  const newPriority = document.getElementById('editPriority').value;
+  const newCategory = document.getElementById('editCategory').value;
+
+  await api.update('todos', editingId, {
+    text: newText,
+    priority: newPriority,
+    category: newCategory
+    // created_at intentionally NOT updated
+  });
+
+  task.text = newText;
+  task.priority = newPriority;
+  task.category = newCategory;
+  renderTasks();
+  document.getElementById('editOverlay').classList.remove('open');
+  editingId = null;
+});
+
+function closeEditModal() {
+  document.getElementById('editOverlay').classList.remove('open');
+  editingId = null;
+}
+document.getElementById('editClose').addEventListener('click', closeEditModal);
+document.getElementById('editCancel').addEventListener('click', closeEditModal);
+document.getElementById('editOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('editOverlay')) closeEditModal();
+});
+
+// normalize Supabase row to app format
+function normalizeTask(row) {
+  return {
+    id: row.id,
+    text: row.text,
+    priority: row.priority || 'mid',
+    category: row.category || 'Other',
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+    done: row.is_done || false
+  };
+}
+
+function completeTask(id, el) {
+  el.querySelector('.task-text').classList.add('strikethrough');
+  el.querySelector('.task-check').classList.add('checked');
+
+  setTimeout(async () => {
+    el.classList.add('dismissing');
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    const completedAt = new Date().toISOString();
+
+    // Insert into log
+    await api.insert('todo_log', {
+      todo_id: id,
+      text: task.text,
+      priority: task.priority,
+      category: task.category,
+      created_at: task.createdAt,
+      completed_at: completedAt,
+      user_id: USER_ID
+    });
+
+    // Update todo as done
+    await api.update('todos', id, { is_done: true, completed_at: completedAt });
+
+    setTimeout(() => {
+      task.done = true;
+      task.completedAt = completedAt;
+      log.unshift(task);
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+    }, 380);
+  }, 400);
+}
+
+async function deleteTask(id, el) {
+  el.classList.add('dismissing');
+  await api.delete('todos', id);
+  setTimeout(() => {
+    tasks = tasks.filter(t => t.id !== id);
+    renderTasks();
+  }, 380);
+}
+
+function saveTasks() {} // no-op: Supabase is source of truth
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('ja-JP', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+// ======== LOG ========
+async function renderLog() {
+  const list = document.getElementById('logList');
+  list.innerHTML = '<div class="section-label">COMPLETED LOG</div>';
+
+  const rows = await api.get('todo_log', `user_id=eq.${USER_ID}&order=completed_at.desc`);
+  log = rows.map(r => ({
+    id: r.id,
+    text: r.text,
+    priority: r.priority || 'mid',
+    category: r.category || 'Other',
+    createdAt: r.created_at,
+    completedAt: r.completed_at
+  }));
+
+  if (log.length === 0) {
+    list.innerHTML += `<div style="color:var(--text3);font-size:11px;padding:20px;text-align:center;">完了したTODOがここに表示されます</div>`;
+    return;
+  }
+
+  log.forEach(task => {
+    const div = document.createElement('div');
+    div.className = `log-item l-${task.priority}`;
+    div.innerHTML = `
+      <div class="log-text">${task.text}</div>
+      <div class="log-times">
+        <div class="log-time-row">📝 Created: <span>${formatTime(task.createdAt)}</span></div>
+        <div class="log-time-row">✓ Done: <span>${formatTime(task.completedAt)}</span></div>
+        <div class="log-time-row">📁 <span>${task.category} · ${task.priority.toUpperCase()}</span></div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// Share / Export
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const text = log.map(t =>
+    `[${t.priority.toUpperCase()}] ${t.text}\n  作成: ${formatTime(t.createdAt)}\n  完了: ${formatTime(t.completedAt)}`
+  ).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('shareBtn').textContent = '✓ COPIED';
+    setTimeout(() => document.getElementById('shareBtn').textContent = '⬆ SHARE', 2000);
+  });
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const data = JSON.stringify({tasks, log}, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'flux-export.json';
+  a.click();
+});
+
+// ======== CALENDAR ========
+function renderCalendar() {
+  const label = document.getElementById('calMonthLabel');
+  const grid = document.getElementById('calGrid');
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = `${calYear}  ${monthNames[calMonth]}`;
+
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth + 1, 0);
+  const startDay = first.getDay();
+
+  grid.innerHTML = '';
+
+  // prev month padding
+  for (let i = 0; i < startDay; i++) {
+    const prevDate = new Date(calYear, calMonth, -startDay + i + 1);
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.textContent = prevDate.getDate();
+    grid.appendChild(d);
+  }
+
+  const todayStr = new Date().toDateString();
+
+  for (let day = 1; day <= last.getDate(); day++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day';
+    d.textContent = day;
+
+    const dateStr = new Date(calYear, calMonth, day).toDateString();
+    if (dateStr === todayStr) d.classList.add('today');
+
+    // Check if any tasks created on this day
+    const dayTasks = tasks.filter(t => new Date(t.createdAt).toDateString() === dateStr);
+    const dayDone = log.filter(t => t.completedAt && new Date(t.completedAt).toDateString() === dateStr);
+
+    if (dayTasks.length > 0) d.classList.add('has-tasks');
+    if (dayDone.length > 0) d.classList.add('has-done');
+
+    d.addEventListener('click', () => showDayDetail(calYear, calMonth, day));
+    grid.appendChild(d);
+  }
+
+  // next month padding
+  const totalCells = startDay + last.getDate();
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remaining; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.textContent = i;
+    grid.appendChild(d);
+  }
+}
+
+function showDayDetail(y, m, day) {
+  const dateStr = new Date(y, m, day).toDateString();
+  const detail = document.getElementById('calDayDetail');
+
+  const dayTasks = tasks.filter(t => new Date(t.createdAt).toDateString() === dateStr);
+  const dayDone = log.filter(t => t.completedAt && new Date(t.completedAt).toDateString() === dateStr);
+
+  if (dayTasks.length === 0 && dayDone.length === 0) {
+    detail.innerHTML = '';
+    return;
+  }
+
+  let html = `<div class="section-label">${m+1}/${day} の記録</div>`;
+  dayTasks.forEach(t => {
+    html += `<div class="log-item l-${t.priority}" style="margin-bottom:3px">
+      <div class="log-text" style="text-decoration:none;color:var(--text)">${t.text}</div>
+      <div class="log-time-row" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)">📝 作成 <span style="color:var(--text2)">${formatTime(t.createdAt)}</span></div>
+    </div>`;
+  });
+  dayDone.forEach(t => {
+    html += `<div class="log-item l-${t.priority}" style="margin-bottom:3px">
+      <div class="log-text">${t.text}</div>
+      <div class="log-time-row" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)">✓ 完了 <span style="color:var(--long)">${formatTime(t.completedAt)}</span></div>
+    </div>`;
+  });
+
+  detail.innerHTML = html;
+}
+
+document.getElementById('calPrev').addEventListener('click', () => {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+});
+
+// ======== AI REVIEW MODAL ========
+document.getElementById('reviewBtn').addEventListener('click', async () => {
+  const modal = document.getElementById('modal');
+  const modalText = document.getElementById('modalText');
+  modal.classList.add('open');
+  modalText.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const monthLabel = `${calYear}年${monthNames[calMonth]}`;
+
+  const monthTasks = log.filter(t => {
+    const d = new Date(t.completedAt || t.createdAt);
+    return d.getFullYear() === calYear && d.getMonth() === calMonth;
+  });
+
+  const activeThisMonth = tasks.filter(t => {
+    const d = new Date(t.createdAt);
+    return d.getFullYear() === calYear && d.getMonth() === calMonth;
+  });
+
+  const prompt = `${monthLabel}のTODO活動をサマリーしてください。
+
+完了したTASK (${monthTasks.length}件):
+${monthTasks.map(t => `- [${t.priority}][${t.category}] ${t.text}`).join('\n') || 'なし'}
+
+未完了のTASK (${activeThisMonth.length}件):
+${activeThisMonth.map(t => `- [${t.priority}][${t.category}] ${t.text}`).join('\n') || 'なし'}
+
+以下を含む日本語のブリーフなインサイトを200字以内で:
+1. 今月の達成状況
+2. カテゴリ傾向
+3. 来月へのアドバイス`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || 'レビューを取得できませんでした。';
+    modalText.textContent = text;
+  } catch (e) {
+    modalText.textContent = `${monthLabel}のデータを分析中... Supabase連携後に本格稼働します。\n\n完了: ${monthTasks.length}件 / 進行中: ${activeThisMonth.length}件`;
+  }
+});
+
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('open');
+});
+
+// ======== INIT ========
+async function init() {
+  // Show loading
+  document.getElementById('taskList').innerHTML = '<div class="section-label" style="color:var(--accent)">LOADING...</div>';
+
+  const rows = await api.get('todos', `user_id=eq.${USER_ID}&is_done=eq.false`);
+  tasks = rows.map(normalizeTask);
+  renderTasks();
+}
+
+init();
+</script>
+
+
+</body></html>
